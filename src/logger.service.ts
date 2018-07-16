@@ -67,7 +67,7 @@ export class Logger {
     }
   }
 
-  public addToLog(type: string, message: string, skipConsoleLog: boolean, consoleLogMethod: any) {
+  public addToLog(type: string, message: string, skipConsoleLog: boolean, writeToFile: boolean, consoleLogMethod: any) {
     if (this._printToFile) {
       let today = this.getToday()
       if (!this.data[today]) {
@@ -77,7 +77,7 @@ export class Logger {
       let msg = now + ' - ' + type + ': ' + message + '\r\n'
       this.data[today] = this.data[today] + msg
 
-      if (this._initialized) {
+      if (this._initialized && writeToFile) {
         this.writeData(today)
       }
     }
@@ -86,22 +86,22 @@ export class Logger {
     }
   }
 
-  public info(message: string, skipConsoleLog?: boolean) {
-    this.addToLog('INFO', message, skipConsoleLog, console.info)
+  public info(message: string, skipConsoleLog?: boolean, writeToFile?: boolean) {
+    this.addToLog('INFO', message, skipConsoleLog, writeToFile, console.info)
   }
 
-  public warn(message: string, skipConsoleLog?: boolean) {
-    this.addToLog('WARN', message, skipConsoleLog, console.warn)
+  public warn(message: string, skipConsoleLog?: boolean, writeToFile?: boolean) {
+    this.addToLog('WARN', message, skipConsoleLog, writeToFile, console.warn)
   }
 
-  public debug(message: string, skipConsoleLog?: boolean) {
+  public debug(message: string, skipConsoleLog?: boolean, writeToFile?: boolean) {
     if (this.PRINT_DEBUG_MSG) {
-      this.addToLog('DEBUG', message, skipConsoleLog, console.debug)
+      this.addToLog('DEBUG', message, skipConsoleLog, writeToFile, console.debug)
     }
   }
 
-  public error(message: string, skipConsoleLog?: boolean) {
-    this.addToLog('ERROR', message, skipConsoleLog, console.error)
+  public error(message: string, skipConsoleLog?: boolean, writeToFile?: boolean) {
+    this.addToLog('ERROR', message, skipConsoleLog, writeToFile, console.error)
   }
 
   private checkAndCreateDir(path: string, directory: string): Promise<boolean> {
