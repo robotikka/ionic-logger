@@ -75,9 +75,12 @@ export class Logger {
       }
       let now = this.getFormattedTimestamp()
       let msg = now + ' - ' + type + ': ' + message + '\r\n'
-      this.data[today] = this.data[today] + msg
 
-      if (this._initialized && writeToFile) {
+      if (writeToFile) {
+        this.data[today] = this.data[today] + msg
+      }
+
+      if (this._initialized) {
         this.writeData(today)
       }
     }
@@ -134,7 +137,7 @@ export class Logger {
   private loadData(): Promise<void> {
     let that = this
     let today = that.getToday()
-    let file = today + '.txt'
+    let file = today + '.log'
     return that._file.readAsText(that._logPath, file).then(res => {
       return res
     }).catch(error => {
@@ -145,7 +148,7 @@ export class Logger {
   }
 
   private writeData(today: string) {
-    this._file.writeFile(this._logPath, today + '.txt', this.data[today], true).then(res => {
+    this._file.writeFile(this._logPath, today + '.log', this.data[today], true).then(res => {
       // this.printDebugMessage(res)
     }).catch(error => {
       console.error(error)
