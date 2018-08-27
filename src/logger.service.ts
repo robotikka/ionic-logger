@@ -37,8 +37,7 @@ export class Logger {
     let that = this;
     that._file = file;
     const shouldLogToFile = logToFile === undefined ? this.LOG_TO_FILE : logToFile;
-    console.log(shouldLogToFile);
-    
+
     if (that._file && shouldLogToFile) {
       that._logPath = that._file.documentsDirectory
       return that.checkAndCreateDir(that._logPath, that.DOC_DIR).then(success => {
@@ -66,7 +65,7 @@ export class Logger {
           that._initialized = true
           return success
         })
-      }).then(success => {        
+      }).then(success => {
         return this.deleteOldLogs();
       })
     } else {
@@ -76,7 +75,7 @@ export class Logger {
     }
   }
 
-  public addToLog(type: string, message: string, skipConsoleLog: boolean, writeToFile: boolean, consoleLogMethod: any) {    
+  public addToLog(type: string, message: string, skipConsoleLog: boolean, writeToFile: boolean, consoleLogMethod: any) {
     if (this._printToFile) {
       let today = this.getToday()
       if (!this.data[today]) {
@@ -85,16 +84,13 @@ export class Logger {
       let now = this.getFormattedTimestamp()
       let msg = now + ' - ' + type + ': ' + message + '\r\n'
 
-      if (writeToFile) {
-        this.data[today] = this.data[today] + msg
-      }
+      this.data[today] = this.data[today] + msg
 
       if (this._initialized) {
         this.writeData(today)
       }
     }
-    console.log(message);
-    
+
     if (!skipConsoleLog && consoleLogMethod) {
       consoleLogMethod.call(console, message)
     }
@@ -164,19 +160,19 @@ export class Logger {
     return new Promise((resolve, reject) => {
       const path = that._file.documentsDirectory + that.DOC_DIR + '/';
       let today = moment(this.getToday());
-      
+
       this._file.listDir(path, that.LOG_DIR).then(res => {
         const filesToBeDeleted: Array<Promise<any>> = [];
         this.printDebugMessage(`[Logger] ${res.length} log files found`);
         res.forEach(fileEntry => {
           let entryDate = moment(fileEntry.name.split('.')[0]);
           let diff = today.diff(entryDate, 'days');
-          if (fileEntry.isFile && diff > that.LOG_RETENTION_DAYS) {            
+          if (fileEntry.isFile && diff > that.LOG_RETENTION_DAYS) {
             this.printDebugMessage(`[Logger] Deleting file ${fileEntry.name}`);
             filesToBeDeleted.push(this._file.removeFile(path + that.LOG_DIR, fileEntry.name));
           }
         });
-        
+
         Promise.all(filesToBeDeleted).then(res => {
           this.printDebugMessage(`[Logger] Deleted ${res.length} files`);
           resolve();
@@ -185,9 +181,9 @@ export class Logger {
           reject(err);
         });
       })
-      .catch(err => {
-        reject(err);
-      });
+        .catch(err => {
+          reject(err);
+        });
     });
   }
 
