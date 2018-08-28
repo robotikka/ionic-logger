@@ -8,7 +8,9 @@ import {
   LOG_DIR,
   LOG_HOUR_FORMAT,
   Logger,
-  PRINT_DEBUG_MSG
+  PRINT_DEBUG_MSG,
+  LOG_RETENTION_DAYS,
+  LOG_TO_FILE
 } from './logger.service'
 
 @NgModule({
@@ -31,6 +33,8 @@ export class IonicLoggerModule {
         { provide: LOG_DAY_FORMAT, useValue: config.logDayFormat || 'YYYY-MM-DD' },
         { provide: LOG_HOUR_FORMAT, useValue: config.logHourFormat || 'HH:mm:ss:SSS' },
         { provide: PRINT_DEBUG_MSG, useValue: !!config.printDebugMessages },
+        { provide: LOG_RETENTION_DAYS, useValue: config.logRetentionDays || 3 },
+        { provide: LOG_TO_FILE, useValue: config.logToFle || false },
         Logger
       ]
     }
@@ -44,4 +48,6 @@ export interface IonicLoggerModuleConfig {
   logDayFormat?: string
   logHourFormat?: string
   printDebugMessages?: boolean
+  logRetentionDays?: number,
+  logToFle?: boolean
 }

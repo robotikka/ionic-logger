@@ -9,6 +9,8 @@ export const LOG_DIR = new InjectionToken('LOG_DIR')
 export const LOG_DAY_FORMAT = new InjectionToken('LOG_DAY_FORMAT')
 export const LOG_HOUR_FORMAT = new InjectionToken('LOG_HOUR_FORMAT')
 export const PRINT_DEBUG_MSG = new InjectionToken('PRINT_DEBUG_MSG')
+export const LOG_RETENTION_DAYS = new InjectionToken('LOG_RETENTION_DAYS')
+export const LOG_TO_FILE = new InjectionToken('LOG_TO_FILE')
 
 @Injectable()
 export class Logger {
@@ -25,14 +27,18 @@ export class Logger {
     @Inject(LOG_DIR) private LOG_DIR: string,
     @Inject(LOG_DAY_FORMAT) private LOG_DAY_FORMAT: string,
     @Inject(LOG_HOUR_FORMAT) private LOG_HOUR_FORMAT: string,
-    @Inject(PRINT_DEBUG_MSG) private PRINT_DEBUG_MSG: boolean
+    @Inject(PRINT_DEBUG_MSG) private PRINT_DEBUG_MSG: boolean,
+    @Inject(LOG_RETENTION_DAYS) private LOG_RETENTION_DAYS: number,
+    @Inject(LOG_TO_FILE) private LOG_TO_FILE: boolean
   ) {
   }
 
-  public init(file: FileSystem): Promise<boolean> {
-    let that = this
-    that._file = file
-    if (that._file) {
+  public init(file: FileSystem, logToFile?: boolean): Promise<boolean> {
+    let that = this;
+    that._file = file;
+    const shouldLogToFile = logToFile === undefined ? this.LOG_TO_FILE : logToFile;
+
+    if (that._file && shouldLogToFile) {
       that._logPath = that._file.documentsDirectory
       return that.checkAndCreateDir(that._logPath, that.DOC_DIR).then(success => {
         if (success) {
@@ -59,6 +65,8 @@ export class Logger {
           that._initialized = true
           return success
         })
+      }).then(success => {
+        return this.deleteOldLogs();
       })
     } else {
       this._printToFile = false
@@ -76,14 +84,13 @@ export class Logger {
       let now = this.getFormattedTimestamp()
       let msg = now + ' - ' + type + ': ' + message + '\r\n'
 
-      if (writeToFile) {
-        this.data[today] = this.data[today] + msg
-      }
+      this.data[today] = this.data[today] + msg
 
       if (this._initialized) {
         this.writeData(today)
       }
     }
+
     if (!skipConsoleLog && consoleLogMethod) {
       consoleLogMethod.call(console, message)
     }
@@ -145,6 +152,39 @@ export class Logger {
     }).then(res => {
       that.data[today] = that.data[today] ? res + that.data[today] : res
     })
+  }
+
+  private deleteOldLogs(): Promise<boolean> {
+    this.printDebugMessage('[Logger] Deleting old logs');
+    let that = this;
+    return new Promise((resolve, reject) => {
+      const path = that._file.documentsDirectory + that.DOC_DIR + '/';
+      let today = moment(this.getToday());
+
+      this._file.listDir(path, that.LOG_DIR).then(res => {
+        const filesToBeDeleted: Array<Promise<any>> = [];
+        this.printDebugMessage(`[Logger] ${res.length} log files found`);
+        res.forEach(fileEntry => {
+          let entryDate = moment(fileEntry.name.split('.')[0]);
+          let diff = today.diff(entryDate, 'days');
+          if (fileEntry.isFile && diff > that.LOG_RETENTION_DAYS) {
+            this.printDebugMessage(`[Logger] Deleting file ${fileEntry.name}`);
+            filesToBeDeleted.push(this._file.removeFile(path + that.LOG_DIR, fileEntry.name));
+          }
+        });
+
+        Promise.all(filesToBeDeleted).then(res => {
+          this.printDebugMessage(`[Logger] Deleted ${res.length} files`);
+          resolve();
+        }).catch(err => {
+          this.printDebugMessage(`[Logger] Something went wrong while deleting old logs. Error:  ${err}`);
+          reject(err);
+        });
+      })
+        .catch(err => {
+          reject(err);
+        });
+    });
   }
 
   private writeData(today: string) {

@@ -4,4 +4,6 @@ export interface FileSystem {
   createDir(path: string, directory: string, replace?: boolean): Promise<any>
   readAsText(path: string, file: string): Promise<string>
   writeFile(path: string, file: string, data: string | Blob | ArrayBuffer, replace?: boolean): Promise<any>
+  listDir(path: string, dirName: string): Promise<any[]>
+  removeFile(path: string, fileName: string): Promise<any>
 }
